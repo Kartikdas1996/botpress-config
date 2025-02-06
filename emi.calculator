@@ -31,3 +31,6 @@ exports.dialogflowFirebaseFulfillment = (req, res) => {
   const intent = agent.intent;
   intentMap.get(intent)(agent);
 };
+botpressEMIcalculator-config/
+  ├── config.json
+
