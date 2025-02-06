@@ -1,14 +1,33 @@
-package.json
+index.js
 
-{
-  "name": "emi-calculator-bot",
-  "version": "1.0.0",
-  "description": "EMI Calculator Bot",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "dialogflow-fulfillment": "^0.6.1"
-  }
-}
+const df = require('dialogflow-fulfillment');
+const config = require('./config/dialogflow.json');
+
+const emiCalculator = (loanAmount, interestRate, loanTenure) => {
+  const monthlyInterestRate = (interestRate / 100) / 12;
+  const numberOfMonths = loanTenure * 12;
+  const emi = (loanAmount * monthlyInterestRate * (1 + monthlyInterestRate) ** numberOfMonths) / ((1 + monthlyInterestRate) ** numberOfMonths - 1);
+  return emi.toFixed(2);
+};
+
+const calculateEmiIntent = (agent) => {
+  const loanAmount = agent.parameters.loanAmount;
+  const interestRate = agent.parameters.interestRate;
+  const loanTenure = agent.parameters.loanTenure;
+  const emi = emiCalculator(loanAmount, interestRate, loanTenure);
+  agent.add(`Your EMI is ₹ ${emi} per month.`);
+};
+
+const welcomeIntent = (agent) => {
+  agent.add('Hello! Welcome to the EMI Calculator Bot. Please enter the loan amount, interest rate, and loan tenure to calculate your EMI.');
+};
+
+const intentMap = new Map();
+intentMap.set('Calculate EMI', calculateEmiIntent);
+intentMap.set('Welcome', welcomeIntent);
+
+exports.dialogflowFirebaseFulfillment = (req, res) => {
+  const agent = new df.WebhookClient({ request: req, response: res });
+  const intent = agent.intent;
+  intentMap.get(intent)(agent);
+};
